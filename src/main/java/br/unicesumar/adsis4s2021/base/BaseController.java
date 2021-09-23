@@ -4,12 +4,16 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.servlet.function.EntityResponse;
 
 public class BaseController<ENTITY extends BaseEntity, REPO extends JpaRepository<ENTITY, String>> {
 	@Autowired
@@ -31,18 +35,20 @@ public class BaseController<ENTITY extends BaseEntity, REPO extends JpaRepositor
 	}
 	
 	@PostMapping
-	public String post(@RequestBody ENTITY novo) {
-		if (repo.findById(novo.getId()).isPresent()) {
-			throw new RuntimeException("Seu registro já existe, faça um put ao invés de post!");
+	//@ResponseStatus(value = HttpStatus.CREATED)
+	public ResponseEntity<String> post(@RequestBody ENTITY novo) {
+		if (novo.getId() != null && repo.findById(novo.getId()).isPresent()) {
+			//throw new RuntimeException("Seu registro já existe, faça um put ao invés de post!");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Seu registro já existe, faça um put ao invés de post!");
 		}
 		novo = repo.save(novo);
-		return novo.getId();
+		return ResponseEntity.status(HttpStatus.CREATED).body(novo.getId());
 	}
 	
 	@PutMapping("/{id}")
 	public String put(@RequestBody ENTITY modificado, @PathVariable("id") String id) {
 		if (!modificado.getId().equals(id)) {
-			throw new RuntimeException("Para atualizar um registro, os IDs do request devem ser iguais!");
+			throw new RuntimeException("Para atualizar um registro, os Strings do request devem ser iguais!");
 		}
 		if (!repo.findById(id).isPresent()) {
 			throw new RuntimeException("Seu registro não existe, faça um post ao invés de put!");
